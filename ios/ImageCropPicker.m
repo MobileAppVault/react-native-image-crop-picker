@@ -384,7 +384,8 @@ RCT_EXPORT_METHOD(openCropper:(NSDictionary *)options
                                                 withHeight:[NSNumber numberWithFloat:track.naturalSize.height]
                                                   withMime:@"video/mp4"
                                                   withSize:fileSizeValue
-                                                  withData:[NSNull null]]);
+                                                  withData:[NSNull null]
+                                                  withCreationDate:[NSNull null]]);
              } else {
                  completion(nil);
              }
@@ -392,12 +393,13 @@ RCT_EXPORT_METHOD(openCropper:(NSDictionary *)options
      }];
 }
 
-- (NSDictionary*) createAttachmentResponse:(NSString*)filePath withSourceURL:(NSString*)sourceURL withLocalIdentifier:(NSString*)localIdentifier withFilename:(NSString*)filename withWidth:(NSNumber*)width withHeight:(NSNumber*)height withMime:(NSString*)mime withSize:(NSNumber*)size withData:(NSString*)data {
+- (NSDictionary*) createAttachmentResponse:(NSString*)filePath withSourceURL:(NSString*)sourceURL withLocalIdentifier:(NSString*)localIdentifier withFilename:(NSString*)filename withWidth:(NSNumber*)width withHeight:(NSNumber*)height withMime:(NSString*)mime withSize:(NSNumber*)size withData:(NSString*)data withCreationDate:(NSString*)creationDate {
     return @{
              @"path": filePath,
              @"sourceURL": (sourceURL) ? sourceURL : @"",
              @"localIdentifier": (localIdentifier) ? localIdentifier : @"",
              @"filename": (filename) ? filename : @"",
+             @"creationDate": (creationDate) ? creationDate : @"",
              @"width": width,
              @"height": height,
              @"mime": mime,
@@ -487,6 +489,7 @@ RCT_EXPORT_METHOD(openCropper:(NSDictionary *)options
                                                                              withMime:imageResult.mime
                                                                              withSize:[NSNumber numberWithUnsignedInteger:imageResult.data.length]
                                                                              withData:[[self.options objectForKey:@"includeBase64"] boolValue] ? [imageResult.data base64EncodedStringWithOptions:0] : [NSNull null]
+                                                                     withCreationDate:phAsset.creationDate ? [[ImageCropPicker ISO8601DateFormatter] stringFromDate:phAsset.creationDate] : [NSNull null]
                                                         ]];
                              }
                              processed++;
@@ -592,7 +595,8 @@ RCT_EXPORT_METHOD(openCropper:(NSDictionary *)options
                                              withHeight:imageResult.height
                                                withMime:imageResult.mime
                                                withSize:[NSNumber numberWithUnsignedInteger:imageResult.data.length]
-                                               withData:[[self.options objectForKey:@"includeBase64"] boolValue] ? [imageResult.data base64EncodedStringWithOptions:0] : [NSNull null]]);
+                                               withData:[[self.options objectForKey:@"includeBase64"] boolValue] ? [imageResult.data base64EncodedStringWithOptions:0] : [NSNull null]
+                                       withCreationDate:[NSNull null]]);
         }]];
     }
 }
@@ -732,6 +736,22 @@ RCT_EXPORT_METHOD(openCropper:(NSDictionary *)options
                   usingCropRect:(CGRect)cropRect
                   rotationAngle:(CGFloat)rotationAngle {
     [self imageCropViewController:controller didCropImage:croppedImage usingCropRect:cropRect];
+}
+
+
+#pragma mark - Class Methods
+
++ (NSDateFormatter * _Nonnull)ISO8601DateFormatter {
+    static NSDateFormatter *ISO8601DateFormatter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        ISO8601DateFormatter = [[NSDateFormatter alloc] init];
+        NSLocale *enUSPOSIXLocale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        ISO8601DateFormatter.locale = enUSPOSIXLocale;
+        ISO8601DateFormatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
+        ISO8601DateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZZZZZ";
+    });
+    return ISO8601DateFormatter;
 }
 
 @end
